@@ -1,109 +1,152 @@
-const core = require('@actions/core');
-const github = require('@actions/github');
+const core = require("@actions/core");
+const github = require("@actions/github");
 const matchAll = require("match-all");
 const Octokit = require("@octokit/rest");
 
 async function extractJiraKeysFromCommit() {
-    try {
-        const regex = /((([A-Z]+)|([0-9]+))+-\d+)/g;
-        const isPullRequest = core.getInput('is-pull-request') == 'true';
-        // console.log("isPullRequest: " + isPullRequest);
-        const commitMessage = core.getInput('commit-message');
-        // console.log("commitMessage: " + commitMessage);
-        // console.log("core.getInput('parse-all-commits'): " + core.getInput('parse-all-commits'));
-        const parseAllCommits = core.getInput('parse-all-commits') == 'true';
-        // console.log("parseAllCommits: " + parseAllCommits);
+  try {
+    const regex = /((([A-Z]+)|([0-9]+))+-\d+)/g;
+    const isPullRequest = core.getInput("is-pull-request") == "true";
+    const isRelease = core.getInput("is-release") == "true";
+    // console.log("isPullRequest: " + isPullRequest);
+    const commitMessage = core.getInput("commit-message");
+    // console.log("commitMessage: " + commitMessage);
+    // console.log("core.getInput('parse-all-commits'): " + core.getInput('parse-all-commits'));
+    const parseAllCommits = core.getInput("parse-all-commits") == "true";
+    // console.log("parseAllCommits: " + parseAllCommits);
+    const payload = github.context.payload;
+    const owner = payload.repository.owner.login;
+    const repo = payload.repository.name;
+    const latestTag = github.context.payload.release?.tag_name;
+
+    const token = process.env["GITHUB_TOKEN"];
+    const octokit = new Octokit({
+      auth: token,
+    });
+
+    if (isPullRequest) {
+      let resultArr: any = [];
+
+      // console.log("is pull request...");
+
+      const prNum = payload.number;
+
+      const { data } = await octokit.pulls.listCommits({
+        owner: owner,
+        repo: repo,
+        pull_number: prNum,
+      });
+
+      data.forEach((item: any) => {
+        const commit = item.commit;
+        const matches: any = matchAll(commit.message, regex).toArray();
+        matches.forEach((match: any) => {
+          if (resultArr.find((element: any) => element == match)) {
+            // console.log(match + " is already included in result array");
+          } else {
+            // console.log(" adding " + match + " to result array");
+            resultArr.push(match);
+          }
+        });
+      });
+
+      const result = resultArr.join(",");
+      core.setOutput("jira-keys", result);
+    } else if (isRelease) {
+      if (!latestTag) {
+        throw new Error("No latest tag found in the release event");
+      }
+
+      const tags = await octokit.repos.listTags({
+        owner,
+        repo,
+        per_page: 100,
+      });
+
+      const latestTagIndex = tags.data.findIndex(
+        (tag) => tag.name === latestTag,
+      );
+
+      if (latestTagIndex === -1 || latestTagIndex === tags.data.length - 1) {
+        throw new Error("No previous tag found");
+      }
+
+      const previousTag = tags.data[latestTagIndex - 1].name;
+
+      const { data } = await octokit.repos.compareCommits({
+        owner,
+        repo,
+        base: previousTag,
+        head: latestTag,
+      });
+
+      let resultArr: any = [];
+
+      console.log("Is release and commits to compare: ", data.commits);
+      data.forEach((item: any) => {
+        const commit = item.commit;
+        const matches: any = matchAll(commit.message, regex).toArray();
+        matches.forEach((match: any) => {
+          if (resultArr.find((element: any) => element == match)) {
+            // console.log(match + " is already included in result array");
+          } else {
+            // console.log(" adding " + match + " to result array");
+            resultArr.push(match);
+          }
+        });
+      });
+      const result = resultArr.join(",");
+      core.setOutput("jira-keys", result);
+    } else {
+      // console.log("not a pull request");
+
+      if (commitMessage) {
+        // console.log("commit-message input val provided...");
+        const matches = matchAll(commitMessage, regex).toArray();
+        const result = matches.join(",");
+        core.setOutput("jira-keys", result);
+      } else {
+        // console.log("no commit-message input val provided...");
         const payload = github.context.payload;
 
-        const token = process.env['GITHUB_TOKEN'];
-        const octokit = new Octokit({
-            auth: token,
-        });
+        if (parseAllCommits) {
+          // console.log("parse-all-commits input val is true");
+          let resultArr: any = [];
 
-        if (isPullRequest) {
-            let resultArr: any = [];
-
-            // console.log("is pull request...");
-
-            const owner = payload.repository.owner.login;
-            const repo = payload.repository.name;
-            const prNum = payload.number;
-
-            const { data } = await octokit.pulls.listCommits({
-                owner: owner,
-                repo: repo,
-                pull_number: prNum
+          payload.commits.forEach((commit: any) => {
+            const matches = matchAll(commit.message, regex).toArray();
+            matches.forEach((match: any) => {
+              if (resultArr.find((element: any) => element == match)) {
+                // console.log(match + " is already included in result array");
+              } else {
+                // console.log(" adding " + match + " to result array");
+                resultArr.push(match);
+              }
             });
+          });
 
-            data.forEach((item: any) => {
-                const commit = item.commit;
-                const matches: any = matchAll(commit.message, regex).toArray();
-                matches.forEach((match: any) => {
-                    if (resultArr.find((element: any) => element == match)) {
-                        // console.log(match + " is already included in result array");
-                    } else {
-                        // console.log(" adding " + match + " to result array");
-                        resultArr.push(match);
-                    }
-                });
-
-            });
-
-            const result = resultArr.join(',');
-            core.setOutput("jira-keys", result);
+          const result = resultArr.join(",");
+          core.setOutput("jira-keys", result);
+        } else {
+          // console.log("parse-all-commits input val is false");
+          // console.log("head_commit: ", payload.head_commit);
+          const matches = matchAll(
+            payload.head_commit.message,
+            regex,
+          ).toArray();
+          const result = matches.join(",");
+          core.setOutput("jira-keys", result);
         }
-        else {
-            // console.log("not a pull request");
-
-            if (commitMessage) {
-                // console.log("commit-message input val provided...");
-                const matches = matchAll(commitMessage, regex).toArray();
-                const result = matches.join(',');
-                core.setOutput("jira-keys", result);
-            }
-            else {
-                // console.log("no commit-message input val provided...");
-                const payload = github.context.payload;
-
-                if (parseAllCommits) {
-                    // console.log("parse-all-commits input val is true");
-                    let resultArr: any = [];
-
-                    payload.commits.forEach((commit: any) => {
-                        const matches = matchAll(commit.message, regex).toArray();
-                        matches.forEach((match: any) => {
-                            if (resultArr.find((element: any) => element == match)) {
-                                // console.log(match + " is already included in result array");
-                            } else {
-                                // console.log(" adding " + match + " to result array");
-                                resultArr.push(match);
-                            }
-                        });
-
-                    });
-
-                    const result = resultArr.join(',');
-                    core.setOutput("jira-keys", result);
-                }
-                else {
-                    // console.log("parse-all-commits input val is false");
-                    // console.log("head_commit: ", payload.head_commit);
-                    const matches = matchAll(payload.head_commit.message, regex).toArray();
-                    const result = matches.join(',');
-                    core.setOutput("jira-keys", result);
-                }
-
-            }
-        }
-
-    } catch (error) {
-        core.setFailed(error.message);
+      }
     }
+  } catch (error) {
+    core.setFailed(error.message);
+  }
 }
 
 (async function () {
-    await extractJiraKeysFromCommit();
-    // console.log("finished extracting jira keys from commit message");
+  await extractJiraKeysFromCommit();
+  // console.log("finished extracting jira keys from commit message");
 })();
 
-export default extractJiraKeysFromCommit
+export default extractJiraKeysFromCommit;
