@@ -60,18 +60,20 @@ async function extractJiraKeysFromCommit() {
       const tags = await octokit.repos.listTags({
         owner,
         repo,
-        per_page: 100,
+        per_page: 2,
       });
 
       const latestTagIndex = tags.data.findIndex(
-        (tag) => tag.name === latestTag,
+        (tag: { name: string }) => tag.name === latestTag,
       );
-
-      if (latestTagIndex === -1 || latestTagIndex === tags.data.length - 1) {
+      if (latestTagIndex === -1) {
         throw new Error("No previous tag found");
       }
 
-      const previousTag = tags.data[latestTagIndex - 1].name;
+      const previousTag = tags.data[latestTagIndex + 1].name;
+
+      console.log("Previous tag: ", previousTag);
+      console.log("Latest tag: ", latestTag);
 
       const { data } = await octokit.repos.compareCommits({
         owner,
@@ -82,8 +84,7 @@ async function extractJiraKeysFromCommit() {
 
       let resultArr: any = [];
 
-      console.log("Is release and commits to compare: ", data.commits);
-      data.forEach((item: any) => {
+      data.commits.forEach((item: any) => {
         const commit = item.commit;
         const matches: any = matchAll(commit.message, regex).toArray();
         matches.forEach((match: any) => {
@@ -96,6 +97,7 @@ async function extractJiraKeysFromCommit() {
         });
       });
       const result = resultArr.join(",");
+      console.log("Results jira-keys", result);
       core.setOutput("jira-keys", result);
     } else {
       // console.log("not a pull request");
