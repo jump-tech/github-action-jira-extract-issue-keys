@@ -71,7 +71,7 @@ async function extractJiraKeysFromCommit() {
                 head: latestTag,
             });
             let resultArr = [];
-            data.forEach((item) => {
+            data.commits.forEach((item) => {
                 const commit = item.commit;
                 const matches = matchAll(commit.message, regex).toArray();
                 matches.forEach((match) => {
