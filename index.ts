@@ -60,14 +60,13 @@ async function extractJiraKeysFromCommit() {
       const tags = await octokit.repos.listTags({
         owner,
         repo,
-        per_page: 100,
+        per_page: 2,
       });
 
       const latestTagIndex = tags.data.findIndex(
-        (tag) => tag.name === latestTag,
+        (tag: { name: string }) => tag.name === latestTag,
       );
-
-      if (latestTagIndex === -1 || latestTagIndex === tags.data.length - 1) {
+      if (latestTagIndex === -1 || latestTagIndex === 0) {
         throw new Error("No previous tag found");
       }
 
