@@ -69,10 +69,13 @@ async function extractJiraKeysFromCommit() {
         (tag: { name: string }) => tag.name === latestTag,
       );
       if (latestTagIndex === -1) {
-        throw new Error("No previous tag found");
+        throw new Error("Latest tag not found in the tags list");
       }
 
       const previousTag = tags.data[latestTagIndex + 1].name;
+      if (!previousTag) {
+        throw new Error("Previous tag not found in the tags list");
+      }
 
       console.log("Previous tag: ", previousTag);
       console.log("Latest tag: ", latestTag);
