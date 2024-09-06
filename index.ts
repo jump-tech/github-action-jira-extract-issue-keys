@@ -18,7 +18,7 @@ async function extractJiraKeysFromCommit() {
     const payload = github.context.payload;
     const owner = payload.repository.owner.login;
     const repo = payload.repository.name;
-    const latestTag = core.getInput('release-tag') || github.context.payload.release?.tag_name;
+    const latestTag = core.getInput('release-version') || github.context.payload.release?.tag_name;
 
     const token = process.env["GITHUB_TOKEN"];
     const octokit = new Octokit({

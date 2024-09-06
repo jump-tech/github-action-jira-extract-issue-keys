@@ -15,7 +15,7 @@ inputs:
   is-release:
     description: 'commit message to be parsed for jira keys. For release'
     required: false
-  release-tag:
+  release-version:
     description: 'release tag for the version to be tagged in jira'
     required: false
 
