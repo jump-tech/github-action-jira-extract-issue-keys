@@ -13,7 +13,10 @@ inputs:
     description: 'commit message to be parsed for jira keys. Note that if this input is not provided, the commits found in github.context.payload will be used'
     required: false
   is-release:
-    description: 'commit message to be parsed for jira keys. Note that if this input is not provided, the commits found in github.context.payload will be used'
+    description: 'commit message to be parsed for jira keys. For release'
+    required: false
+  is-atom-release:
+    description: 'commit message to be parsed for jira keys. For atom release'
     required: false
 
 outputs:
