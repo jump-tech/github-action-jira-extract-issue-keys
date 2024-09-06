@@ -57,6 +57,7 @@ async function extractJiraKeysFromCommit() {
                 repo,
                 per_page: 2,
             });
+            console.log("Tags: ", tags.data);
             const latestTagIndex = tags.data.findIndex((tag) => tag.name === latestTag);
             if (latestTagIndex === -1) {
                 throw new Error("No previous tag found");

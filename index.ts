@@ -64,6 +64,7 @@ async function extractJiraKeysFromCommit() {
         per_page: 2,
       });
 
+      console.log("Tags: ", tags.data);
       const latestTagIndex = tags.data.findIndex(
         (tag: { name: string }) => tag.name === latestTag,
       );
