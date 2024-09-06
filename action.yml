@@ -15,8 +15,8 @@ inputs:
   is-release:
     description: 'commit message to be parsed for jira keys. For release'
     required: false
-  is-atom-release:
-    description: 'commit message to be parsed for jira keys. For atom release'
+  release-tag:
+    description: 'release tag for the version to be tagged in jira'
     required: false
 
 outputs:

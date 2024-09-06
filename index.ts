@@ -8,6 +8,7 @@ async function extractJiraKeysFromCommit() {
     const regex = /((([A-Z]+)|([0-9]+))+-\d+)/g;
     const isPullRequest = core.getInput("is-pull-request") == "true";
     const isRelease = core.getInput("is-release") == "true";
+
     // console.log("isPullRequest: " + isPullRequest);
     const commitMessage = core.getInput("commit-message");
     // console.log("commitMessage: " + commitMessage);
@@ -17,7 +18,7 @@ async function extractJiraKeysFromCommit() {
     const payload = github.context.payload;
     const owner = payload.repository.owner.login;
     const repo = payload.repository.name;
-    const latestTag = github.context.payload.release?.tag_name;
+    const latestTag = core.getInput('release-tag') || github.context.payload.release?.tag_name;
 
     const token = process.env["GITHUB_TOKEN"];
     const octokit = new Octokit({
