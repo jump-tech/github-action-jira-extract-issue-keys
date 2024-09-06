@@ -52,20 +52,19 @@ async function extractJiraKeysFromCommit() {
             if (!latestTag) {
                 throw new Error("No latest tag found in the release event");
             }
-            const tags = await octokit.repos.listTags({
+            // Git the last two releases from the repo
+            const releases = await octokit.repos.listReleases({
                 owner,
                 repo,
-                per_page: 2,
+                per_page: 100,
             });
-            console.log("Tags: ", tags.data);
-            const latestTagIndex = tags.data.findIndex((tag) => tag.name === latestTag);
-            if (latestTagIndex === -1) {
+            const orderedReleases = releases.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            const latestRelease = orderedReleases[0];
+            if (latestRelease.tag_name !== latestTag) {
                 throw new Error("Latest tag not found in the tags list");
             }
-            const previousTag = tags.data[latestTagIndex + 1].name;
-            if (!previousTag) {
-                throw new Error("Previous tag not found in the tags list");
-            }
+            const previousRelease = orderedReleases[1];
+            const previousTag = previousRelease.tag_name;
             console.log("Previous tag: ", previousTag);
             console.log("Latest tag: ", latestTag);
             const { data } = await octokit.repos.compareCommits({
