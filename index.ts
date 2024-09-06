@@ -86,6 +86,7 @@ async function extractJiraKeysFromCommit() {
       let resultArr: any = [];
 
       data.commits.forEach((item: any) => {
+        console.log("Item: ", item);
         const commit = item.commit;
         const matches: any = matchAll(commit?.message, regex).toArray();
         matches.forEach((match: any) => {
