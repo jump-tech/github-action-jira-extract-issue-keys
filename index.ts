@@ -65,7 +65,7 @@ async function extractJiraKeysFromCommit() {
         per_page: 100,
       });
 
-      const orderedReleases = releases.sort(
+      const orderedReleases = releases.data.sort(
         (a: { created_at: string },
          b: { created_at: string }) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       const latestRelease = orderedReleases[0];

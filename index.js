@@ -58,7 +58,7 @@ async function extractJiraKeysFromCommit() {
                 repo,
                 per_page: 100,
             });
-            const orderedReleases = releases.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            const orderedReleases = releases.data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
             const latestRelease = orderedReleases[0];
             if (latestRelease.tag_name !== latestTag) {
                 throw new Error("Latest tag not found in the release list");
