@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = require("@actions/core");
 const github = require("@actions/github");
 const matchAll = require("match-all");
-const Octokit = require("@octokit/rest");
+const { Octokit } = require("@octokit/rest");
 async function extractJiraKeysFromCommit() {
     try {
         const regex = /((([A-Z]+)|([0-9]+))+-\d+)/g;

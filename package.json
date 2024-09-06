@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/HighwayThree/jira-extract-issue-keys#readme",
   "dependencies": {
-    "@octokit/rest": "^16.40.0",
+    "@octokit/rest": "^16.43.2",
     "match-all": "^1.2.5"
   },
   "devDependencies": {
