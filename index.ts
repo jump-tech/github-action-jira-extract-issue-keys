@@ -70,7 +70,7 @@ async function extractJiraKeysFromCommit() {
          b: { created_at: string }) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       const latestRelease = orderedReleases[0];
       if (latestRelease.tag_name !== latestTag) {
-        throw new Error("Latest tag not found in the tags list");
+        throw new Error("Latest tag not found in the release list");
       }
 
       const previousRelease = orderedReleases[1];
