@@ -40,7 +40,7 @@ async function extractJiraKeysFromCommit() {
 
       data.forEach((item: any) => {
         const commit = item.commit;
-        const matches: any = matchAll(commit.message, regex).toArray();
+        const matches: any = matchAll(commit?.message, regex).toArray();
         matches.forEach((match: any) => {
           if (resultArr.find((element: any) => element == match)) {
             // console.log(match + " is already included in result array");
@@ -87,7 +87,7 @@ async function extractJiraKeysFromCommit() {
 
       data.commits.forEach((item: any) => {
         const commit = item.commit;
-        const matches: any = matchAll(commit.message, regex).toArray();
+        const matches: any = matchAll(commit?.message, regex).toArray();
         matches.forEach((match: any) => {
           if (resultArr.find((element: any) => element == match)) {
             // console.log(match + " is already included in result array");
@@ -117,7 +117,7 @@ async function extractJiraKeysFromCommit() {
           let resultArr: any = [];
 
           payload.commits.forEach((commit: any) => {
-            const matches = matchAll(commit.message, regex).toArray();
+            const matches = matchAll(commit?.message, regex).toArray();
             matches.forEach((match: any) => {
               if (resultArr.find((element: any) => element == match)) {
                 // console.log(match + " is already included in result array");
@@ -134,7 +134,7 @@ async function extractJiraKeysFromCommit() {
           // console.log("parse-all-commits input val is false");
           // console.log("head_commit: ", payload.head_commit);
           const matches = matchAll(
-            payload.head_commit.message,
+            payload.head_commit?.message,
             regex,
           ).toArray();
           const result = matches.join(",");
@@ -143,7 +143,7 @@ async function extractJiraKeysFromCommit() {
       }
     }
   } catch (error) {
-    core.setFailed(error.message);
+    core.setFailed(error?.message);
   }
 }
 
