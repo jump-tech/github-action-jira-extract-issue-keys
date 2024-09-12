@@ -1,4 +1,5 @@
 {
+    "rootDir": ".",
     "compilerOptions": {
       "module": "commonjs",
       "target": "esnext",
@@ -10,8 +11,8 @@
       "noUnusedParameters": true,
       "noImplicitAny": true,
       "removeComments": false,
-      "preserveConstEnums": true
+      "preserveConstEnums": true,
     },
     "include": ["action.yml", "index.ts", "__tests__"],
-    "exclude": ["node_modules"]
+    "exclude": ["../../node_modules", "node_modules"]
   }

@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const core = require("@actions/core");
 const github = require("@actions/github");
 const matchAll = require("match-all");
-const Octokit = require("@octokit/rest");
+const { Octokit } = require("@octokit/rest");
 async function extractJiraKeysFromCommit() {
     try {
         const regex = /((([A-Z]+)|([0-9]+))+-\d+)/g;
@@ -18,7 +18,7 @@ async function extractJiraKeysFromCommit() {
         const payload = github.context.payload;
         const owner = payload.repository.owner.login;
         const repo = payload.repository.name;
-        const latestTag = github.context.payload.release?.tag_name;
+        const latestTag = core.getInput('release-version') || github.context.payload.release?.tag_name;
         const token = process.env["GITHUB_TOKEN"];
         const octokit = new Octokit({
             auth: token,
@@ -34,7 +34,7 @@ async function extractJiraKeysFromCommit() {
             });
             data.forEach((item) => {
                 const commit = item.commit;
-                const matches = matchAll(commit.message, regex).toArray();
+                const matches = matchAll(commit?.message, regex).toArray();
                 matches.forEach((match) => {
                     if (resultArr.find((element) => element == match)) {
                         // console.log(match + " is already included in result array");
@@ -52,16 +52,19 @@ async function extractJiraKeysFromCommit() {
             if (!latestTag) {
                 throw new Error("No latest tag found in the release event");
             }
-            const tags = await octokit.repos.listTags({
+            // Git the last two releases from the repo
+            const releases = await octokit.repos.listReleases({
                 owner,
                 repo,
-                per_page: 2,
+                per_page: 100,
             });
-            const latestTagIndex = tags.data.findIndex((tag) => tag.name === latestTag);
-            if (latestTagIndex === -1) {
-                throw new Error("No previous tag found");
+            const orderedReleases = releases.data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            const latestRelease = orderedReleases[0];
+            if (latestRelease.tag_name !== latestTag) {
+                throw new Error("Latest tag not found in the release list");
             }
-            const previousTag = tags.data[latestTagIndex + 1].name;
+            const previousRelease = orderedReleases[1];
+            const previousTag = previousRelease.tag_name;
             console.log("Previous tag: ", previousTag);
             console.log("Latest tag: ", latestTag);
             const { data } = await octokit.repos.compareCommits({
@@ -72,8 +75,9 @@ async function extractJiraKeysFromCommit() {
             });
             let resultArr = [];
             data.commits.forEach((item) => {
+                console.log("Item: ", item);
                 const commit = item.commit;
-                const matches = matchAll(commit.message, regex).toArray();
+                const matches = matchAll(commit?.message, regex).toArray();
                 matches.forEach((match) => {
                     if (resultArr.find((element) => element == match)) {
                         // console.log(match + " is already included in result array");
@@ -103,7 +107,7 @@ async function extractJiraKeysFromCommit() {
                     // console.log("parse-all-commits input val is true");
                     let resultArr = [];
                     payload.commits.forEach((commit) => {
-                        const matches = matchAll(commit.message, regex).toArray();
+                        const matches = matchAll(commit?.message, regex).toArray();
                         matches.forEach((match) => {
                             if (resultArr.find((element) => element == match)) {
                                 // console.log(match + " is already included in result array");
@@ -120,7 +124,7 @@ async function extractJiraKeysFromCommit() {
                 else {
                     // console.log("parse-all-commits input val is false");
                     // console.log("head_commit: ", payload.head_commit);
-                    const matches = matchAll(payload.head_commit.message, regex).toArray();
+                    const matches = matchAll(payload.head_commit?.message, regex).toArray();
                     const result = matches.join(",");
                     core.setOutput("jira-keys", result);
                 }
@@ -128,7 +132,7 @@ async function extractJiraKeysFromCommit() {
         }
     }
     catch (error) {
-        core.setFailed(error.message);
+        core.setFailed(error?.message);
     }
 }
 (async function () {

@@ -1,13 +1,14 @@
 const core = require("@actions/core");
 const github = require("@actions/github");
 const matchAll = require("match-all");
-const Octokit = require("@octokit/rest");
+const { Octokit } = require("@octokit/rest")
 
 async function extractJiraKeysFromCommit() {
   try {
     const regex = /((([A-Z]+)|([0-9]+))+-\d+)/g;
     const isPullRequest = core.getInput("is-pull-request") == "true";
     const isRelease = core.getInput("is-release") == "true";
+
     // console.log("isPullRequest: " + isPullRequest);
     const commitMessage = core.getInput("commit-message");
     // console.log("commitMessage: " + commitMessage);
@@ -17,7 +18,7 @@ async function extractJiraKeysFromCommit() {
     const payload = github.context.payload;
     const owner = payload.repository.owner.login;
     const repo = payload.repository.name;
-    const latestTag = github.context.payload.release?.tag_name;
+    const latestTag = core.getInput('release-version') || github.context.payload.release?.tag_name;
 
     const token = process.env["GITHUB_TOKEN"];
     const octokit = new Octokit({
@@ -39,7 +40,7 @@ async function extractJiraKeysFromCommit() {
 
       data.forEach((item: any) => {
         const commit = item.commit;
-        const matches: any = matchAll(commit.message, regex).toArray();
+        const matches: any = matchAll(commit?.message, regex).toArray();
         matches.forEach((match: any) => {
           if (resultArr.find((element: any) => element == match)) {
             // console.log(match + " is already included in result array");
@@ -57,21 +58,23 @@ async function extractJiraKeysFromCommit() {
         throw new Error("No latest tag found in the release event");
       }
 
-      const tags = await octokit.repos.listTags({
+      // Git the last two releases from the repo
+      const releases = await octokit.repos.listReleases({
         owner,
         repo,
-        per_page: 2,
+        per_page: 100,
       });
 
-      const latestTagIndex = tags.data.findIndex(
-        (tag: { name: string }) => tag.name === latestTag,
-      );
-      if (latestTagIndex === -1) {
-        throw new Error("No previous tag found");
+      const orderedReleases = releases.data.sort(
+        (a: { created_at: string },
+         b: { created_at: string }) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const latestRelease = orderedReleases[0];
+      if (latestRelease.tag_name !== latestTag) {
+        throw new Error("Latest tag not found in the release list");
       }
 
-      const previousTag = tags.data[latestTagIndex + 1].name;
-
+      const previousRelease = orderedReleases[1];
+      const previousTag = previousRelease.tag_name;
       console.log("Previous tag: ", previousTag);
       console.log("Latest tag: ", latestTag);
 
@@ -85,8 +88,9 @@ async function extractJiraKeysFromCommit() {
       let resultArr: any = [];
 
       data.commits.forEach((item: any) => {
+        console.log("Item: ", item);
         const commit = item.commit;
-        const matches: any = matchAll(commit.message, regex).toArray();
+        const matches: any = matchAll(commit?.message, regex).toArray();
         matches.forEach((match: any) => {
           if (resultArr.find((element: any) => element == match)) {
             // console.log(match + " is already included in result array");
@@ -116,7 +120,7 @@ async function extractJiraKeysFromCommit() {
           let resultArr: any = [];
 
           payload.commits.forEach((commit: any) => {
-            const matches = matchAll(commit.message, regex).toArray();
+            const matches = matchAll(commit?.message, regex).toArray();
             matches.forEach((match: any) => {
               if (resultArr.find((element: any) => element == match)) {
                 // console.log(match + " is already included in result array");
@@ -133,7 +137,7 @@ async function extractJiraKeysFromCommit() {
           // console.log("parse-all-commits input val is false");
           // console.log("head_commit: ", payload.head_commit);
           const matches = matchAll(
-            payload.head_commit.message,
+            payload.head_commit?.message,
             regex,
           ).toArray();
           const result = matches.join(",");
@@ -142,7 +146,7 @@ async function extractJiraKeysFromCommit() {
       }
     }
   } catch (error) {
-    core.setFailed(error.message);
+    core.setFailed(error?.message);
   }
 }
 

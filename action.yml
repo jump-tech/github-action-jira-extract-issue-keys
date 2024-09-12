@@ -15,13 +15,13 @@ inputs:
   is-release:
     description: 'commit message to be parsed for jira keys. For release'
     required: false
-  is-atom-release:
-    description: 'commit message to be parsed for jira keys. For atom release'
+  release-version:
+    description: 'release tag for the version to be tagged in jira'
     required: false
 
 outputs:
   jira-keys:
     description: 'Jira keys that were found in input string(commit-message) in commad delimited format'
 runs:
-  using: 'node12'
+  using: 'node20'
   main: 'index.js'
