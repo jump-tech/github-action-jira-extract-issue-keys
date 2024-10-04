@@ -9,12 +9,8 @@ async function extractJiraKeysFromCommit() {
         const regex = /((([A-Z]+)|([0-9]+))+-\d+)/g;
         const isPullRequest = core.getInput("is-pull-request") == "true";
         const isRelease = core.getInput("is-release") == "true";
-        // console.log("isPullRequest: " + isPullRequest);
         const commitMessage = core.getInput("commit-message");
-        // console.log("commitMessage: " + commitMessage);
-        // console.log("core.getInput('parse-all-commits'): " + core.getInput('parse-all-commits'));
         const parseAllCommits = core.getInput("parse-all-commits") == "true";
-        // console.log("parseAllCommits: " + parseAllCommits);
         const payload = github.context.payload;
         const owner = payload.repository.owner.login;
         const repo = payload.repository.name;
@@ -25,22 +21,23 @@ async function extractJiraKeysFromCommit() {
         });
         if (isPullRequest) {
             let resultArr = [];
-            // console.log("is pull request...");
             const prNum = payload.number;
-            const { data } = await octokit.pulls.listCommits({
+            console.log(`Parsing commits in pull request  ${prNum} for Jira keys`);
+            const data = await octokit.paginate(octokit.pulls.listCommits, {
                 owner: owner,
                 repo: repo,
                 pull_number: prNum,
+                per_page: 100
             });
+            console.log(`Retrieved ${data.length} commits for PR`);
             data.forEach((item) => {
                 const commit = item.commit;
+                console.log(`Parsing commit message for jira keys: ${commit?.message}`);
                 const matches = matchAll(commit?.message, regex).toArray();
                 matches.forEach((match) => {
                     if (resultArr.find((element) => element == match)) {
-                        // console.log(match + " is already included in result array");
                     }
                     else {
-                        // console.log(" adding " + match + " to result array");
                         resultArr.push(match);
                     }
                 });
