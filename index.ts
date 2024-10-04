@@ -50,10 +50,12 @@ async function extractJiraKeysFromCommit() {
 
       const result = resultArr.join(",");
       core.setOutput("jira-keys", result);
+
     } else if (isRelease) {
       if (!latestTag) {
         throw new Error("No latest tag found in the release event");
       }
+      console.log(`Parsing commits in release event for Jira keys. Latest tag: ${latestTag}`);
 
       // Git the last two releases from the repo
       const releases = await octokit.repos.listReleases({
@@ -87,12 +89,11 @@ async function extractJiraKeysFromCommit() {
       data.commits.forEach((item: any) => {
         console.log("Item: ", item);
         const commit = item.commit;
+        console.log(`Parsing commit message for jira keys: ${commit?.message}`);
         const matches: any = matchAll(commit?.message, regex).toArray();
         matches.forEach((match: any) => {
           if (resultArr.find((element: any) => element == match)) {
-            // console.log(match + " is already included in result array");
           } else {
-            // console.log(" adding " + match + " to result array");
             resultArr.push(match);
           }
         });
@@ -101,28 +102,25 @@ async function extractJiraKeysFromCommit() {
       console.log("Results jira-keys", result);
       core.setOutput("jira-keys", result);
     } else {
-      // console.log("not a pull request");
+      console.log("Not a pull request or release event. Parsing commit messages for Jira keys");
 
       if (commitMessage) {
-        // console.log("commit-message input val provided...");
+        console.log(`Parsing commit message for jira keys: ${commitMessage}`);
         const matches = matchAll(commitMessage, regex).toArray();
         const result = matches.join(",");
         core.setOutput("jira-keys", result);
       } else {
-        // console.log("no commit-message input val provided...");
         const payload = github.context.payload;
 
         if (parseAllCommits) {
-          // console.log("parse-all-commits input val is true");
           let resultArr: any = [];
 
           payload.commits.forEach((commit: any) => {
+            console.log(`Parsing commit message for jira keys: ${commit?.message}`);
             const matches = matchAll(commit?.message, regex).toArray();
             matches.forEach((match: any) => {
               if (resultArr.find((element: any) => element == match)) {
-                // console.log(match + " is already included in result array");
               } else {
-                // console.log(" adding " + match + " to result array");
                 resultArr.push(match);
               }
             });
@@ -131,8 +129,6 @@ async function extractJiraKeysFromCommit() {
           const result = resultArr.join(",");
           core.setOutput("jira-keys", result);
         } else {
-          // console.log("parse-all-commits input val is false");
-          // console.log("head_commit: ", payload.head_commit);
           const matches = matchAll(
             payload.head_commit?.message,
             regex,
@@ -149,7 +145,6 @@ async function extractJiraKeysFromCommit() {
 
 (async function () {
   await extractJiraKeysFromCommit();
-  // console.log("finished extracting jira keys from commit message");
 })();
 
 export default extractJiraKeysFromCommit;
