@@ -28,7 +28,10 @@ async function extractJiraKeysFromCommit() {
                 repo: repo,
                 pull_number: prNum,
                 per_page: 100,
-            }, (response) => response.data);
+            }, (response) => {
+                console.log(response.data);
+                return response.data;
+            });
             console.log(`Retrieved ${data.length} commits for PR`);
             data.forEach((item) => {
                 const commit = item.commit;
