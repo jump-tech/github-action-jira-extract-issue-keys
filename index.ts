@@ -35,7 +35,10 @@ async function extractJiraKeysFromCommit() {
           pull_number: prNum,
           per_page: 100,
         },
-        (response: { data: any }) => response.data,
+        (response: { data: any }) =>  {
+          console.log(response.data);
+          return response.data
+        }
       );
 
       console.log(`Retrieved ${data.length} commits for PR`);
