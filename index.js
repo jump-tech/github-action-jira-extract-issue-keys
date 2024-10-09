@@ -23,14 +23,11 @@ async function extractJiraKeysFromCommit() {
             let resultArr = [];
             const prNum = payload.number;
             console.log(`Parsing commits in pull request  ${prNum} for Jira keys`);
-            const data = await octokit.paginate(octokit.pulls.listCommits, {
+            const data = await octokit.pulls.listCommits({
                 owner: owner,
                 repo: repo,
                 pull_number: prNum,
                 per_page: 100,
-            }, (response) => {
-                console.log(response);
-                return response.data;
             });
             console.log(`Retrieved ${data.length} commits for PR`);
             data.forEach((item) => {
