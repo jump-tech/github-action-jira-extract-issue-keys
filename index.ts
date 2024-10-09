@@ -36,7 +36,7 @@ async function extractJiraKeysFromCommit() {
           per_page: 100,
         },
         (response: { data: any }) =>  {
-          console.log(response.data);
+          console.log(response);
           return response.data
         }
       );

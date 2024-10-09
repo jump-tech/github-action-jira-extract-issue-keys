@@ -29,7 +29,7 @@ async function extractJiraKeysFromCommit() {
                 pull_number: prNum,
                 per_page: 100,
             }, (response) => {
-                console.log(response.data);
+                console.log(response);
                 return response.data;
             });
             console.log(`Retrieved ${data.length} commits for PR`);
