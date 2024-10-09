@@ -58,11 +58,14 @@ async function extractJiraKeysFromCommit() {
       console.log(`Parsing commits in release event for Jira keys. Latest tag: ${latestTag}`);
 
       // Git the last two releases from the repo
-      const releases = await octokit.repos.listReleases({
-        owner,
-        repo,
-        per_page: 100,
-      });
+      const releases = await octokit.repos.listReleases(
+        {
+          owner,
+          repo,
+          per_page: 100,
+        },
+        (response: { data: any }) => response.data,
+      );
 
       const orderedReleases = releases.data.sort(
         (a: { created_at: string },
